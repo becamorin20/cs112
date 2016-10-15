@@ -247,12 +247,30 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     GLdouble yy = y*y;
     GLdouble yz = y*z;
     GLdouble zz = z*z;
+    GLdouble zx = z*x;
+    GLdouble zy = z*y;
+ 
     //make a temp change
     GLdouble result_rotation[STACK_CAP];
     result_rotation[0] = (xx * (1 - c)) + c;
-    result_rotation[1] = (xy * (1 - c)) - (z * s);
-    result_rotation[2] = (xz * (1 - c)) + (y *s);
+    result_rotation[1] = (xy * (1 - c)) - (z*s);
+    result_rotation[2] = (xz * (1 - c)) + (y*s);
+    result_rotation[3] = 0;
     
+    result_rotation[4] = (xy * (1-c)) + (z*s);
+    result_rotation[5] = (yy * (1-c)) + c;
+    result_rotation[6] = (yz * (1-c)) - (x*s);
+    result_rotation[7] = 0;
+    
+    result_rotation[8] = (zx * (1-c)) - (y*s);
+    result_rotation[9] = (zy * (1-c)) + (x*s);
+    result_rotation[10] = (zz * (1-c)) + c;
+    result_rotation[11] = 0;
+    
+    result_rotation[12] = 0;
+    result_rotation[13] = 0;
+    result_rotation[14] = 0;
+    result_rotation[15] = 1;
     
     
     //transpose the matrix
