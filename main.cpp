@@ -48,22 +48,7 @@ void initDisplay( ){
 // Main function
 
 int main( int argc, char **argv ){
-    const GLdouble tempmatrix[16] =
-    {1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1};
-    const GLdouble newmatrix[16] =
-    {1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1};
-    
 
-    
-    
-    
-    
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB |
                         GLUT_DEPTH | GLUT_MULTISAMPLE );

@@ -112,7 +112,7 @@ void I_my_glLoadIdentity(void)
     GLdouble *current = current_matrix;
     for (int i = 0; i< STACK_CAP; i++)
     {
-        *(current + i) = identity[i];
+        current[i] = identity[i];
     }
 }
 
@@ -293,7 +293,22 @@ void I_my_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 
 void I_my_glScaled(GLdouble x, GLdouble y, GLdouble z)
 {
-    // ...
+    const GLdouble scale_matrix[16] =
+    {   x,0,0,0,
+        0,y,0,0,
+        0,0,z,0,
+        0,0,0,1};
+    //need transpose?
+    GLdouble transpose[STACK_CAP];
+    for (int i = 0; i < STACK_CAP/4; i++)
+    {
+        for (int j = 0; j < STACK_CAP/4; j++)
+        {
+            transpose[j+4+i] = scale_matrix[i*4+j];
+        }
+    }
+    matrix_multiply(transpose);
+    
 }
 
 void I_my_glScalef(GLfloat x, GLfloat y, GLfloat z)
@@ -304,12 +319,43 @@ void I_my_glScalef(GLfloat x, GLfloat y, GLfloat z)
 // Copes current matrix to m.
 void I_my_glGetMatrixf(GLfloat *m)
 {
-    // ...
+    GLdouble *current = current_matrix;
+    
+    if (current_stack == &model_view)
+    {
+        for(int i = 0; i < STACK_CAP; i++)
+        {
+            m[i] = current[i];
+        }
+    }
+    else if (current_stack == &projection)
+    {
+        for(int i = 0; i < STACK_CAP; i++)
+        {
+            m[i] = current[i];
+        }
+    }
 }
 
 void I_my_glGetMatrixd(GLdouble *m)
 {
-    // ...
+    GLdouble *current = current_matrix;
+    
+    if (current_stack == &model_view)
+    {
+        for(int i = 0; i < STACK_CAP; i++)
+        {
+            m[i] = current[i];
+        }
+    }
+    else if (current_stack == &projection)
+    {
+        for(int i = 0; i < STACK_CAP; i++)
+        {
+            m[i] = current[i];
+        }
+    }
+
 }
 
 // Remember to normalize vectors.
@@ -317,19 +363,84 @@ void I_my_gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ,
     GLdouble centerX, GLdouble centerY, GLdouble centerZ, 
     GLdouble upX, GLdouble upY, GLdouble upZ)
 {
-    // ...
+
+    GLdouble F1 = centerX - eyeX;
+    GLdouble F2 = centerY - eyeY;
+    GLdouble F3 = centerZ - eyeZ;
+    //normalize(&F1, &F2, &F3);
+    //normalize(&upX, &upY, &upZ);
+    
+    //cross product to create f
+    GLdouble f1, f2, f3;//normalized
+    cross_product(&f1, &f2, &f3, F1, F2, F3, F1, F2, F3);
+    
+    //cross product to create UP''
+    GLdouble up1,up2,up3;//normalized
+    cross_product(&up1,&up2,&up3, upX,upY,upZ,upX,upY,upZ);
+    
+    GLdouble s1,s2,s3;
+    cross_product(&s1,&s2,&s3, f1,f2,f3,up1,up2,up3);
+    
+    GLdouble sx,sy,sz;
+    cross_product(&sx,&sy,&sz, s1,s2,s3,s1,s2,s3);
+    
+    GLdouble u1,u2,u3;
+    cross_product(&u1,&u2,&u3,sx,sy,sz,f1,f2,f3);
+    
+    GLdouble M[16] =
+    {
+        s1,s2,s3,
+        u1,u2,u3,
+        f1,f2,f3,
+        0,0,0,1 };
+    
+    matrix_multiply(M);
+    I_my_glTranslated(-eyeX, -eyeY, -eyeZ);
+    
 }
 
 void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
     GLdouble top, GLdouble zNear, GLdouble zFar)
 {
-    // ...
+    GLdouble A = (right + left) / (right - left);
+    GLdouble B = (top + bottom) / (top - bottom);
+    GLdouble C = (-zFar + zNear) / (zFar - zNear);
+    GLdouble D = (-2 * zNear * zFar) / (zFar - zNear);
+    
+    GLdouble Frust[16] =
+    {
+        (2*zNear/(right - left)), 0, A, 0,
+        0, (2 *zNear/(top - bottom)), B, 0,
+        0, 0, C, D,
+        0, 0, -1, 0 };
+    
+    matrix_multiply(Frust);
+    
+    
 }
 
 // Based on the inputs, calculate left, right, bottom, top, and call I_my_glFrustum accordingly
+
 // remember to convert fovy from degree to radius before calling tan
 void I_my_gluPerspective(GLdouble fovy, GLdouble aspect, 
     GLdouble zNear, GLdouble zFar)
 {
-    // ...
+    GLdouble radian_fovy = fovy * ((GLdouble)M_PI/ (GLdouble)180);
+    GLdouble f = 1/tan(radian_fovy / 2);
+    GLdouble top, right;
+    top = zNear * f;
+    right = top * aspect;
+    
+    I_my_glFrustum(-right, right, -top, top, zNear, zFar);
+    /*
+    GLdouble generated[16] =
+    {
+        (f/aspect), 0, 0, 0,
+        0 ,f ,0 ,0,
+        0,0,((zFar + zNear)/(zNear - zFar)),((2 * zFar * zNear)/(zNear - zFar)),
+        0 ,0 ,-1 ,0
+    };
+     */
+    
+    
 }
