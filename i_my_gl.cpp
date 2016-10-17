@@ -75,7 +75,7 @@ void cross_product(GLdouble *ax, GLdouble *ay, GLdouble *az,
     GLdouble cx, GLdouble cy, GLdouble cz)
 {
     *ax = (by * cz) - (bz * cy);
-    *ay = (bx * cx) - (bx * cz);
+    *ay = (bz * cx) - (bx * cz);
     *az = (bx * cy) - (by * cx);
 }
 
@@ -238,17 +238,17 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     normalize(&x, &y, &z);
     
     //degree = radians * 180/pi
-    GLdouble radian = angle * ((GLdouble)M_PI/ (GLdouble)180);
+    GLdouble radian = angle * ((GLdouble)PI/ (GLdouble)180);
     GLdouble c = (GLdouble)cos(radian);
     GLdouble s = (GLdouble)sin(radian);
-    GLdouble xx = x*y;
+    GLdouble xx = x*x;
     GLdouble xy = x*y;
     GLdouble xz = x*z;
     GLdouble yy = y*y;
     GLdouble yz = y*z;
     GLdouble zz = z*z;
-    GLdouble zx = z*x;
-    GLdouble zy = z*y;
+    
+    
  
     //make a temp change
     GLdouble result_rotation[STACK_CAP];
@@ -262,8 +262,8 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     result_rotation[6] = (yz * (1-c)) - (x*s);
     result_rotation[7] = 0;
     
-    result_rotation[8] = (zx * (1-c)) - (y*s);
-    result_rotation[9] = (zy * (1-c)) + (x*s);
+    result_rotation[8] = (xz * (1-c)) - (y*s);
+    result_rotation[9] = (yz * (1-c)) + (x*s);
     result_rotation[10] = (zz * (1-c)) + c;
     result_rotation[11] = 0;
     
@@ -282,7 +282,7 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
         }
     }
     //change to this matrix
-    matrix_multiply(result_rotation);
+    matrix_multiply(transpose);
     
 }
 
@@ -325,14 +325,14 @@ void I_my_glGetMatrixf(GLfloat *m)
     {
         for(int i = 0; i < STACK_CAP; i++)
         {
-            m[i] = current[i];
+            m[i] = (GLfloat) current[i];
         }
     }
     else if (current_stack == &projection)
     {
         for(int i = 0; i < STACK_CAP; i++)
         {
-            m[i] = current[i];
+            m[i] = (GLfloat)current[i];
         }
     }
 }
@@ -367,33 +367,37 @@ void I_my_gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ,
     GLdouble F1 = centerX - eyeX;
     GLdouble F2 = centerY - eyeY;
     GLdouble F3 = centerZ - eyeZ;
-    //normalize(&F1, &F2, &F3);
+    normalize(&F1, &F2, &F3);
     //normalize(&upX, &upY, &upZ);
-    
+    GLdouble s1,s2,s3;
+    cross_product(&s1,&s2,&s3,F1,F2,F3,upX,upY,upZ);
+    normalize(&s1, &s2, &s3);
+    GLdouble u1,u2,u3;
+    cross_product(&u1,&u2,&u3, s1,s2,s3,F1,F2,F3);
+    normalize(&u1, &u2, &u3);
     //cross product to create f
-    GLdouble f1, f2, f3;//normalized
-    cross_product(&f1, &f2, &f3, F1, F2, F3, F1, F2, F3);
+    //GLdouble f1, f2, f3;//normalized
+    //cross_product(&f1, &f2, &f3, F1, F2, F3, F1, F2, F3);
     
     //cross product to create UP''
-    GLdouble up1,up2,up3;//normalized
-    cross_product(&up1,&up2,&up3, upX,upY,upZ,upX,upY,upZ);
+    //GLdouble up1,up2,up3;//normalized
+    //cross_product(&up1,&up2,&up3, upX,upY,upZ,upX,upY,upZ);
     
-    GLdouble s1,s2,s3;
-    cross_product(&s1,&s2,&s3, f1,f2,f3,up1,up2,up3);
     
-    GLdouble sx,sy,sz;
-    cross_product(&sx,&sy,&sz, s1,s2,s3,s1,s2,s3);
+    //cross_product(&s1,&s2,&s3, f1,f2,f3,up1,up2,up3);
     
-    GLdouble u1,u2,u3;
-    cross_product(&u1,&u2,&u3,sx,sy,sz,f1,f2,f3);
+    //GLdouble sx,sy,sz;
+    //cross_product(&sx,&sy,&sz, s1,s2,s3,s1,s2,s3);
+    
+    
+    //cross_product(&u1,&u2,&u3,sx,sy,sz,f1,f2,f3);
     
     GLdouble M[16] =
     {
         s1,s2,s3,
         u1,u2,u3,
-        f1,f2,f3,
+        -F1,-F2,-F3,
         0,0,0,1 };
-    
     matrix_multiply(M);
     I_my_glTranslated(-eyeX, -eyeY, -eyeZ);
     
@@ -403,14 +407,15 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
     GLdouble top, GLdouble zNear, GLdouble zFar)
 {
     GLdouble A = (right + left) / (right - left);
-    GLdouble B = (top + bottom) / (top - bottom);
-    GLdouble C = (-zFar + zNear) / (zFar - zNear);
-    GLdouble D = (-2 * zNear * zFar) / (zFar - zNear);
+    GLdouble B = (top + bottom) / (bottom - top);
+    GLdouble C = -(zFar + zNear) / (zFar - zNear);
+    GLdouble D = (-2 * zFar* zNear) / (zFar - zNear);
+    
     
     GLdouble Frust[16] =
     {
         (2*zNear/(right - left)), 0, A, 0,
-        0, (2 *zNear/(top - bottom)), B, 0,
+        0, ((2 *zNear)/(bottom - top)), B, 0,
         0, 0, C, D,
         0, 0, -1, 0 };
     
@@ -425,8 +430,8 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 void I_my_gluPerspective(GLdouble fovy, GLdouble aspect, 
     GLdouble zNear, GLdouble zFar)
 {
-    GLdouble radian_fovy = fovy * ((GLdouble)M_PI/ (GLdouble)180);
-    GLdouble f = 1/tan(radian_fovy / 2);
+    
+    GLdouble f = tan(fovy/((GLdouble)PI * (GLdouble) 360));
     GLdouble top, right;
     top = zNear * f;
     right = top * aspect;
