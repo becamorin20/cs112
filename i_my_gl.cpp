@@ -38,33 +38,47 @@ struct matrix_stack projection = {{{0}}, 0};
 // The current stack pointer that specifies the matrix mode.
 struct matrix_stack *current_stack = &model_view;
 
-// Multiplies current matrix with matrix b, put the result in current matrix.
-// current = current * b
+
 void matrix_multiply(const GLdouble *b)
 {
     GLdouble *current = current_matrix;
     //current matrix defined...now multiply them
     //first row
-    
+    /*
     current[0] = (current[0] * b[0]) + (current[1] * b[4]) + (current[2] * b[8]) + (current[3] * b[12]);
-    current[1] = (current[0] * b[1]) + (current[1] * b[5]) + (current[2] * b[9]) + (current[3] * b[13]);
-    current[2] = (current[0] * b[2]) + (current[1] * b[6]) + (current[2] * b[10]) + (current[3] * b[14]);
-    current[3] = (current[0] * b[3]) + (current[1] * b[7]) + (current[2] * b[11]) + (current[3] * b[15]);
+    current[4] = (current[0] * b[1]) + (current[1] * b[5]) + (current[2] * b[9]) + (current[3] * b[13]);
+    current[8] = (current[0] * b[2]) + (current[1] * b[6]) + (current[2] * b[10]) + (current[3] * b[14]);
+    current[12] = (current[0] * b[3]) + (current[1] * b[7]) + (current[2] * b[11]) + (current[3] * b[15]);
     //second row
-    current[4] = (current[4] * b[0]) + (current[5] * b[4]) + (current[6] * b[8]) + (current[7] * b[12]);
+    current[1] = (current[4] * b[0]) + (current[5] * b[4]) + (current[6] * b[8]) + (current[7] * b[12]);
     current[5] = (current[4] * b[1]) + (current[5] * b[5]) + (current[6] * b[9]) + (current[7] * b[13]);
-    current[6] = (current[4] * b[2]) + (current[5] * b[6]) + (current[6] * b[10]) + (current[7] * b[14]);
-    current[7] = (current[4] * b[3]) + (current[5] * b[7]) + (current[6] * b[11]) + (current[7] * b[15]);
+    current[9] = (current[4] * b[2]) + (current[5] * b[6]) + (current[6] * b[10]) + (current[7] * b[14]);
+    current[13] = (current[4] * b[3]) + (current[5] * b[7]) + (current[6] * b[11]) + (current[7] * b[15]);
     //third row
-    current[8] = (current[8] * b[0]) + (current[9] * b[4]) + (current[10] * b[8]) + (current[11] * b[12]);
-    current[9] = (current[8] * b[1]) + (current[9] * b[5]) + (current[10] * b[9]) + (current[11] * b[13]);
+    current[2] = (current[8] * b[0]) + (current[9] * b[4]) + (current[10] * b[8]) + (current[11] * b[12]);
+    current[6] = (current[8] * b[1]) + (current[9] * b[5]) + (current[10] * b[9]) + (current[11] * b[13]);
     current[10] = (current[8] * b[2]) + (current[9] * b[6]) + (current[10] * b[10]) + (current[11] * b[14]);
-    current[11] = (current[8] * b[3]) + (current[9] * b[7]) + (current[10] * b[11]) + (current[11] * b[15]);
+    current[14] = (current[8] * b[3]) + (current[9] * b[7]) + (current[10] * b[11]) + (current[11] * b[15]);
     //fourth row
-    current[12] = (current[12] * b[0]) + (current[13] * b[4]) + (current[14] * b[8]) + (current[15] * b[12]);
-    current[13] = (current[12] * b[1]) + (current[13] * b[5]) + (current[14] * b[9]) + (current[15] * b[13]);
-    current[14] = (current[12] * b[2]) + (current[13] * b[6]) + (current[14] * b[10]) + (current[15] * b[14]);
+    current[3] = (current[12] * b[0]) + (current[13] * b[4]) + (current[14] * b[8]) + (current[15] * b[12]);
+    current[7] = (current[12] * b[1]) + (current[13] * b[5]) + (current[14] * b[9]) + (current[15] * b[13]);
+    current[11] = (current[12] * b[2]) + (current[13] * b[6]) + (current[14] * b[10]) + (current[15] * b[14]);
     current[15] = (current[12] * b[3]) + (current[13] * b[7]) + (current[14] * b[11]) + (current[15] * b[15]);
+    
+    */
+    // no need to transpose if written this way..opengl read column direction
+    for (int i = 0; i < STACK_CAP/4; i++)
+    {
+        for (int j = 0; j < STACK_CAP/4; j++)
+        {
+            for(int k = 0; k < STACK_CAP/4; k++)
+            {
+                current[i*4+j] += current[i*4+k] * (b[k*4+j]);
+            }
+        }
+        
+    }
+   
     
 }
 
@@ -207,12 +221,13 @@ void I_my_glLoadMatrixd(const GLdouble *m)
 
 void I_my_glTranslated(GLdouble x, GLdouble y, GLdouble z)
 {
-    const GLdouble translating[16] =
+    GLdouble translating[16] =
     {1, 0, 0, x,
      0, 1, 0, y,
      0, 0, 1, z,
      0, 0, 0, 1};
     //transpose the translating matrix
+    
     GLdouble transpose[STACK_CAP];
     for (int i = 0; i < STACK_CAP/4; i++)
     {    for (int j = 0; j < STACK_CAP/4; j++)
@@ -272,18 +287,8 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     result_rotation[14] = 0;
     result_rotation[15] = 1;
     
-    
-    //transpose the matrix
-    GLdouble transpose[STACK_CAP];
-    for (int i = 0; i < STACK_CAP/4; i++)
-    {    for (int j = 0; j < STACK_CAP/4; j++)
-        {
-            transpose[j*4+i] = result_rotation[i*4+j];
-        }
-    }
-    //change to this matrix
-    matrix_multiply(transpose);
-    
+
+    matrix_multiply(result_rotation);
 }
 
 void I_my_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
@@ -293,21 +298,13 @@ void I_my_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 
 void I_my_glScaled(GLdouble x, GLdouble y, GLdouble z)
 {
-    const GLdouble scale_matrix[16] =
+    GLdouble scale_matrix[16] =
     {   x,0,0,0,
         0,y,0,0,
         0,0,z,0,
         0,0,0,1};
-    //need transpose?
-    GLdouble transpose[STACK_CAP];
-    for (int i = 0; i < STACK_CAP/4; i++)
-    {
-        for (int j = 0; j < STACK_CAP/4; j++)
-        {
-            transpose[j+4+i] = scale_matrix[i*4+j];
-        }
-    }
-    matrix_multiply(transpose);
+
+    matrix_multiply(scale_matrix);
     
 }
 
@@ -321,41 +318,20 @@ void I_my_glGetMatrixf(GLfloat *m)
 {
     GLdouble *current = current_matrix;
     
-    if (current_stack == &model_view)
+    for(int i = 0; i < STACK_CAP; i++)
     {
-        for(int i = 0; i < STACK_CAP; i++)
-        {
-            m[i] = (GLfloat) current[i];
-        }
+        m[i] = (GLfloat) current[i];
     }
-    else if (current_stack == &projection)
-    {
-        for(int i = 0; i < STACK_CAP; i++)
-        {
-            m[i] = (GLfloat)current[i];
-        }
-    }
+    
 }
 
 void I_my_glGetMatrixd(GLdouble *m)
 {
     GLdouble *current = current_matrix;
-    
-    if (current_stack == &model_view)
+    for(int i = 0; i < STACK_CAP; i++)
     {
-        for(int i = 0; i < STACK_CAP; i++)
-        {
-            m[i] = current[i];
-        }
+        m[i] = current[i];
     }
-    else if (current_stack == &projection)
-    {
-        for(int i = 0; i < STACK_CAP; i++)
-        {
-            m[i] = current[i];
-        }
-    }
-
 }
 
 // Remember to normalize vectors.
@@ -364,41 +340,34 @@ void I_my_gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ,
     GLdouble upX, GLdouble upY, GLdouble upZ)
 {
 
+    //Get view and normalize it
     GLdouble F1 = centerX - eyeX;
     GLdouble F2 = centerY - eyeY;
     GLdouble F3 = centerZ - eyeZ;
     normalize(&F1, &F2, &F3);
     //normalize(&upX, &upY, &upZ);
+    GLdouble Upx, Upy, Upz;
+    Upx = upX;
+    Upy = upY;
+    Upz = upZ;
+    normalize(&Upx, &Upy, &Upz);
+    
     GLdouble s1,s2,s3;
-    cross_product(&s1,&s2,&s3,F1,F2,F3,upX,upY,upZ);
-    normalize(&s1, &s2, &s3);
+    cross_product(&s1,&s2,&s3,F1,F2,F3,Upx,Upy,Upz);
+    
     GLdouble u1,u2,u3;
-    cross_product(&u1,&u2,&u3, s1,s2,s3,F1,F2,F3);
-    normalize(&u1, &u2, &u3);
-    //cross product to create f
-    //GLdouble f1, f2, f3;//normalized
-    //cross_product(&f1, &f2, &f3, F1, F2, F3, F1, F2, F3);
-    
-    //cross product to create UP''
-    //GLdouble up1,up2,up3;//normalized
-    //cross_product(&up1,&up2,&up3, upX,upY,upZ,upX,upY,upZ);
-    
-    
-    //cross_product(&s1,&s2,&s3, f1,f2,f3,up1,up2,up3);
-    
-    //GLdouble sx,sy,sz;
-    //cross_product(&sx,&sy,&sz, s1,s2,s3,s1,s2,s3);
-    
-    
-    //cross_product(&u1,&u2,&u3,sx,sy,sz,f1,f2,f3);
-    
-    GLdouble M[16] =
+    cross_product(&u1,&u2,&u3,s1,s2,s3,F1,F2,F3);
+
+    GLdouble M1[16] =
     {
-        s1,s2,s3,
-        u1,u2,u3,
-        -F1,-F2,-F3,
-        0,0,0,1 };
-    matrix_multiply(M);
+        s1,u1,-F1,0,
+        s2,u2,-F2,0,
+        s3,u3,-F3,0,
+        0,0,0,1
+    };
+ 
+ 
+    matrix_multiply(M1);
     I_my_glTranslated(-eyeX, -eyeY, -eyeZ);
     
 }
@@ -418,9 +387,23 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
         0, ((2 *zNear)/(bottom - top)), B, 0,
         0, 0, C, D,
         0, 0, -1, 0 };
+ 
+    //transpose Frust
+    GLdouble transpose[16] =
+    {
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0
+    };
     
-    matrix_multiply(Frust);
-    
+    for (int i = 0; i < STACK_CAP/4; i++)
+        for (int j = 0; j < STACK_CAP/4; j++)
+        {
+            transpose[j * 4 + i] = Frust[i * 4 + j];
+        }
+    matrix_multiply(transpose);
+    //matrix_multiply(Frust);
     
 }
 
@@ -431,12 +414,14 @@ void I_my_gluPerspective(GLdouble fovy, GLdouble aspect,
     GLdouble zNear, GLdouble zFar)
 {
     
-    GLdouble f = tan(fovy/((GLdouble)PI * (GLdouble) 360));
-    GLdouble top, right;
+    GLdouble f = tan(fovy * ((GLdouble)PI / (GLdouble) 360));
+    GLdouble top, right, bottom, left;
     top = zNear * f;
+    bottom = -top;
     right = top * aspect;
+    left = -right;
     
-    I_my_glFrustum(-right, right, -top, top, zNear, zFar);
+    I_my_glFrustum(left, right, top, bottom, zNear, zFar);
     /*
     GLdouble generated[16] =
     {

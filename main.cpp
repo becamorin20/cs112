@@ -9,6 +9,7 @@
 
 #include "my_gl.h"
 
+
 #define IMAGE_WIDTH  512
 #define IMAGE_HEIGHT 512
 
@@ -27,7 +28,7 @@ void initDisplay( ){
 	
     fieldOfView = 45.0;
     aspect = (float)IMAGE_WIDTH/IMAGE_HEIGHT;
-    nearPlane   = 0.1;
+    nearPlane   = 1;
     farPlane    = 50.0;
     
     /* setup context */
@@ -36,12 +37,14 @@ void initDisplay( ){
     gluPerspective( fieldOfView, aspect, nearPlane, farPlane );
     
     glEnable( GL_DEPTH_TEST );
+    glShadeModel(GL_SMOOTH);
     glDisable( GL_CULL_FACE );
     
-    glClearColor( 0.0, 0.0, 0.0, 1.0 );
+    glClearColor( 0, 0, 0, 1.0 );
     glClearDepth( 1 );
     
     glMatrixMode( GL_MODELVIEW );
+    glLoadIdentity();
 }
 
 //##########################################

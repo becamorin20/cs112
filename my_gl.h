@@ -12,8 +12,11 @@
 //#define glRotatef my_glRotatef
 #define glScaled my_glScaled
 #define glScalef my_glScalef
+
+//still need checking....
 #define gluLookAt my_gluLookAt
-//works...except starts which looks empty...need zoom out
+
+//start very close to the surface of the the cube need to zoom out
 #define glFrustum my_glFrustum
 #define gluPerspective my_gluPerspective
 

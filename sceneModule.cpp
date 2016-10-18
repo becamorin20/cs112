@@ -5,8 +5,9 @@
  */
 
 #include "sceneModule.h"
-
+#include <math.h>
 #include "my_gl.h"
+
 
 GLfloat angley = 20;    /* in degrees */
 GLfloat anglex = 30;   /* in degrees */
@@ -26,6 +27,7 @@ static float cubeColors[6][4] =
 
 static float cubeVertexes[6][4][4] =
 {
+    
   {
     {-1.0, -1.0, -1.0, 1.0},
     {-1.0, -1.0, 1.0, 1.0},
@@ -61,6 +63,8 @@ static float cubeVertexes[6][4][4] =
     {-1.0, 1.0, 1.0, 1.0},
     {-1.0, -1.0, 1.0, 1.0},
     {1.0, -1.0, 1.0, 1.0}}
+
+    
 };
 
 void drawScene(){
@@ -73,17 +77,34 @@ void drawScene(){
 		glVertex4fv(&cubeVertexes[i][2][0]);
 		glVertex4fv(&cubeVertexes[i][3][0]);
     glEnd();
-  }
+      
+ }
 }
 
 void sceneTransformation(){
   glLoadIdentity( );
+  
+  
+     glTranslatef(-distanceX, distanceY, -distanceZ);
+  
+     glRotatef( anglex, 1.0, 0.0, 0.0 );
+     glRotatef( angley, 0.0, 1.0, 0.0 );
 
-  glTranslatef(-distanceX, distanceY, -distanceZ);
-  glRotatef( anglex, 1.0, 0.0, 0.0 );
-  glRotatef( angley, 0.0, 1.0, 0.0 );
+   /*
+    GLdouble theta = anglex * ((GLdouble)M_PI/180);
+    GLdouble phi = angley * ((GLdouble)M_PI/180);
+    GLdouble eyeX = distanceZ * cos(theta) * sin(phi);
+    GLdouble eyeY = distanceZ * sin(theta)*sin(theta);
+    GLdouble eyeZ = distanceZ * cos(phi);
     
-  //  gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ);
+    
+    gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    
+    
+    */
+
+  //gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ);
+    
 }
 
 void display(){
@@ -91,7 +112,8 @@ void display(){
 
   /* Set up transformation */
   sceneTransformation();
-  /* Draw the scene into the back buffer */
+  /* Draw the scene into the back buffer */    
+    
   drawScene();
   /* Swap the front buffer with the back buffer - assumes double buffering */
   glutSwapBuffers();
