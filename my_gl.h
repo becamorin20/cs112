@@ -5,7 +5,7 @@
 #define glMatrixMode my_glMatrixMode
 #define glLoadIdentity my_glLoadIdentity
 
-//working
+//works
 #define glPushMatrix my_glPushMatrix
 #define glPopMatrix my_glPopMatrix
 #define glLoadMatrixf my_glLoadMatrixf
@@ -15,7 +15,7 @@
 #define glTranslated my_glTranslated
 #define glTranslatef my_glTranslatef
 
-//identified to have some issues
+//works
 #define glRotated my_glRotated
 #define glRotatef my_glRotatef
 
@@ -26,7 +26,7 @@
 //still need checking...and figure out how it actually work
 #define gluLookAt my_gluLookAt
 
-//start very close to the surface of the the cube need to zoom out
+//working 
 #define glFrustum my_glFrustum
 #define gluPerspective my_gluPerspective
 
