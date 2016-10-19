@@ -64,21 +64,20 @@ void matrix_multiply(const GLdouble *b)
     current[7] = (current[12] * b[1]) + (current[13] * b[5]) + (current[14] * b[9]) + (current[15] * b[13]);
     current[11] = (current[12] * b[2]) + (current[13] * b[6]) + (current[14] * b[10]) + (current[15] * b[14]);
     current[15] = (current[12] * b[3]) + (current[13] * b[7]) + (current[14] * b[11]) + (current[15] * b[15]);
-    
     */
+    
     // no need to transpose if written this way..opengl read column direction
-    for (int i = 0; i < STACK_CAP/4; i++)
-    {
-        for (int j = 0; j < STACK_CAP/4; j++)
-        {
-            for(int k = 0; k < STACK_CAP/4; k++)
-            {
-                current[i*4+j] += current[i*4+k] * (b[k*4+j]);
-            }
+    //simplified result
+    GLdouble temp[16];
+    for (int i = 0; i < STACK_CAP; i += 4){
+        for (int j = 0; j < STACK_CAP/4; ++j){
+            temp[i + j] = current_matrix[i] * b[j] + current_matrix[i + 1] * b[j + 4] + current_matrix[i + 2] * b[j + 8] + current_matrix[i + 3] * b[j + 12];
         }
-        
     }
-   
+    for (int i = 0; i < 16; ++i){
+        current_matrix[i] = temp[i];
+    }
+
     
 }
 
@@ -206,7 +205,7 @@ void I_my_glLoadMatrixf(const GLfloat *m)
     GLdouble *current = current_matrix;
     for (int i = 0; i < STACK_CAP; i++)
     {
-        current[i] = m[i];
+        current[i] = (GLdouble)m[i];
     }
 }
 
@@ -253,9 +252,11 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     normalize(&x, &y, &z);
     
     //degree = radians * 180/pi
-    GLdouble radian = angle * ((GLdouble)PI/ (GLdouble)180);
+    GLdouble radian = (angle * (GLdouble)PI)/((GLdouble)180);
     GLdouble c = (GLdouble)cos(radian);
     GLdouble s = (GLdouble)sin(radian);
+    //GLdouble c = cos(angle);
+    //GLdouble s = sin(angle);
     GLdouble xx = x*x;
     GLdouble xy = x*y;
     GLdouble xz = x*z;
@@ -287,8 +288,29 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
     result_rotation[14] = 0;
     result_rotation[15] = 1;
     
-
-    matrix_multiply(result_rotation);
+    GLdouble transpose[STACK_CAP];
+    for (int i = 0; i < STACK_CAP/4; ++i)
+        for (int j = 0; j < STACK_CAP/4; ++j)
+        {
+            transpose[j * 4 + i] = result_rotation[i * 4 + j];
+        }
+    
+    
+    //storing temp location for our current matrixs
+    
+    
+    GLdouble temp[16];
+    for (int i = 0; i < STACK_CAP; ++i)
+    {
+        temp[i] = current_matrix[i];
+    }
+    //load the transpose matrix first
+    //I_my_glLoadMatrixd(transpose);
+    //multiply them T * M
+    
+    I_my_glLoadMatrixd(transpose);
+    matrix_multiply(temp);
+    
 }
 
 void I_my_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
@@ -304,7 +326,13 @@ void I_my_glScaled(GLdouble x, GLdouble y, GLdouble z)
         0,0,z,0,
         0,0,0,1};
 
-    matrix_multiply(scale_matrix);
+    GLdouble transpose[STACK_CAP];
+    for (int i = 0; i < STACK_CAP/4; ++i)
+        for (int j = 0; j < STACK_CAP/4; ++j)
+        {
+            transpose[j * 4 + i] = scale_matrix[i * 4 + j];
+        }
+    matrix_multiply(transpose);
     
 }
 
@@ -316,7 +344,7 @@ void I_my_glScalef(GLfloat x, GLfloat y, GLfloat z)
 // Copes current matrix to m.
 void I_my_glGetMatrixf(GLfloat *m)
 {
-    GLdouble *current = current_matrix;
+    const GLdouble *current = current_matrix;
     
     for(int i = 0; i < STACK_CAP; i++)
     {
@@ -327,7 +355,7 @@ void I_my_glGetMatrixf(GLfloat *m)
 
 void I_my_glGetMatrixd(GLdouble *m)
 {
-    GLdouble *current = current_matrix;
+    const GLdouble *current = current_matrix;
     for(int i = 0; i < STACK_CAP; i++)
     {
         m[i] = current[i];
@@ -403,6 +431,7 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
             transpose[j * 4 + i] = Frust[i * 4 + j];
         }
     matrix_multiply(transpose);
+    
     //matrix_multiply(Frust);
     
 }

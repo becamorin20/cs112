@@ -1,19 +1,29 @@
 
 // The following definitions overwrite original OpenGL functions with my_gl
+
+//working correctly now
 #define glMatrixMode my_glMatrixMode
 #define glLoadIdentity my_glLoadIdentity
+
+//working
 #define glPushMatrix my_glPushMatrix
 #define glPopMatrix my_glPopMatrix
 #define glLoadMatrixf my_glLoadMatrixf
 #define glLoadMatrixd my_glLoadMatrixd
+
+//works
 #define glTranslated my_glTranslated
 #define glTranslatef my_glTranslatef
+
+//identified to have some issues
 #define glRotated my_glRotated
-//#define glRotatef my_glRotatef
+#define glRotatef my_glRotatef
+
+//all working
 #define glScaled my_glScaled
 #define glScalef my_glScalef
 
-//still need checking....
+//still need checking...and figure out how it actually work
 #define gluLookAt my_gluLookAt
 
 //start very close to the surface of the the cube need to zoom out

@@ -26,10 +26,10 @@ GLfloat farPlane;
 void initDisplay( ){
     /* Perspective projection parameters */
 	
-    fieldOfView = 45.0;
+    fieldOfView = 90.0;
     aspect = (float)IMAGE_WIDTH/IMAGE_HEIGHT;
     nearPlane   = 1;
-    farPlane    = 50.0;
+    farPlane    = 100.0;
     
     /* setup context */
     glMatrixMode( GL_PROJECTION );

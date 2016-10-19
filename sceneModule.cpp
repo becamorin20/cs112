@@ -85,22 +85,18 @@ void sceneTransformation(){
   glLoadIdentity( );
   
   
-     glTranslatef(-distanceX, distanceY, -distanceZ);
-  
-     glRotatef( anglex, 1.0, 0.0, 0.0 );
-     glRotatef( angley, 0.0, 1.0, 0.0 );
-
+    glTranslatef(-distanceX, distanceY, -distanceZ);
+    glRotatef( anglex, 1.0, 0.0, 0.0 );
+    glRotatef( angley, 0.0, 1.0, 0.0 );
+   
+   //rotation becomes camera -- does not focus on the object
    /*
     GLdouble theta = anglex * ((GLdouble)M_PI/180);
     GLdouble phi = angley * ((GLdouble)M_PI/180);
     GLdouble eyeX = distanceZ * cos(theta) * sin(phi);
     GLdouble eyeY = distanceZ * sin(theta)*sin(theta);
     GLdouble eyeZ = distanceZ * cos(phi);
-    
-    
     gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-    
-    
     */
 
   //gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ);
