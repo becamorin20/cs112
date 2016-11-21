@@ -18,7 +18,7 @@ int wire = 0;
 int lightposmodifier = 1;
 
 //copy the same start position and angle, also set the light position
-GLfloat light_position[] = {-100.0, 100.0, 100.0, 0.0};
+GLfloat light_position[] = {-150.0, 150.0, 1000.0, 0.0};
 static GLfloat LightAngle1 = 20;
 static GLfloat LightAngle2 = 30;
 extern PLYObject* ply;
@@ -70,8 +70,8 @@ void readKeyboard(unsigned char key, int x, int y)
     current_pos[0] = 0.0;
     current_pos[1] = 0.0;
     current_pos[2] = 5.0;
-    light_position[0]= -100.0;
-    light_position[1] = 100.0;
+    light_position[0]= -150.0;
+    light_position[1] = 150.0;
     light_position[2] = 1000.0;
     break;
   case 'h':
@@ -153,8 +153,9 @@ void mouseMoveHandler(int x, int y)
 
   case 1: // Calculate the rotations
     
-          if(lightposmodifier)
+          if(lightposmodifier)//if light is turned on
           {
+              //modify the light angle similar to the model transform
               LightAngle1 = LightAngle1 + (x - startX);
               LightAngle2 = LightAngle2 + (y - startY);
           }

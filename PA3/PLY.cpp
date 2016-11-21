@@ -362,7 +362,8 @@ void PLYObject::draw()
 					//colors[v][0] = v%256;
 					//colors[v][1] = (2*v)%256;
 					//colors[v][2] = (3*v)%256;
-                    //Phong illumination equation = (As*Am) + ((Al*Am)+Id+Is)*att
+                    //Phong illumination Model
+                    // (1/(a + bq + cq^2)) (kdLd(l*n) + ksLs(r*v)a) + kaLa
                     float M[16];
                     Matrix4f modelViewMatrix;
                     glGetFloatv(GL_MODELVIEW_MATRIX, M);
@@ -380,15 +381,17 @@ void PLYObject::draw()
                     Vector3f V;
                     multVector(V, modelViewMatrix, vertices[v]);
                     
-                    Vector4f light;
+                    Vector4f L;
                     for (int i = 0; i < 4; i++)
                     {
-                        light[i] = light_pos[i];
+                        L[i] = light_pos[i]; //set the light source vector
                     }
                     Vector3f lightDir;
-                    sub(lightDir, light, V);
+                    sub(lightDir, L, V); //light direction = light vector - view vector
                     
+                    //distance for handling normalization
                     float distance = 0;
+                    
                     for(int i = 0; i<3; i++)
                     {
                         distance += pow(lightDir[i],2);
@@ -399,21 +402,23 @@ void PLYObject::draw()
                     float AL[4] = {0.0f, 0.0f, 0.0f, 0.0f};
                     glGetLightfv(GL_LIGHT0,GL_AMBIENT,AL);
                     
-                    //model ambient
+                    //ambient
                     Vector4f As = {0.0f, 0.0f, 0.0f, 0.0f};
                     glGetFloatv(GL_LIGHT_MODEL_AMBIENT, As);
                     
-                    //diffuse light
+                    //diffuse
                     float Dl[4] = {0.0f, 0.0f, 0.0f, 0.0f};
                     glGetLightfv(GL_LIGHT0, GL_DIFFUSE, Dl);
                     
-                    
+                    //specular
                     float Sl[4] = {0.0f, 0.0f, 0.0f, 0.0f};
                     glGetLightfv(GL_LIGHT0, GL_SPECULAR, Sl);
                     
                     Vector4f Am = {0.0f, 0.0f, 0.0f, 0.0f};
                     float Dm[4] = {0.0f, 0.0f, 0.0f, 0.0f};
                     float Sm[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+                    
+                    //Ambient + Diffuse + Specular = Phong Reflection
                     for (int i = 0; i < 4; i++)
                     {
                         Am[i] = ambient[i];
@@ -429,15 +434,19 @@ void PLYObject::draw()
                     
                     float shin = shininess[0];
                     
-                    float const_Atten = 0.0f;
-                    float line_Atten = 0.0f;
-                    float quadra_Atten = 0.0f;
+                    //set the variable
+                    float const_Atten = 1.0f; //K0 constant attenuation
+                    float line_Atten = 0.1f;  //K1 linear attenuation
+                    float quadra_Atten = 0.01f; //K2 quadratic attenuation
                     glGetLightfv(GL_LIGHT0, GL_CONSTANT_ATTENUATION, &const_Atten);
                     glGetLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, &line_Atten);
                     glGetLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, &quadra_Atten);
                     
-                    float attenuation = (const_Atten + (line_Atten * distance) + (quadra_Atten*distance*distance));
+                   
+                    //att = 1.0/(1.0 + (0.1*dist) + (0.01 *dist*dist))
+                    float attenuation = 1/(const_Atten + (line_Atten * distance) + (quadra_Atten*distance*distance));
                     
+                    //calculate ambient component
                     Vector4f temp;
                     //multVectors(temp, As, Am);
                     for (int k = 0; k < 4; k++)
@@ -460,11 +469,13 @@ void PLYObject::draw()
                     }
                     
                     Vector4f result_color;
+                    //we add this color - ambient color
                     add(result_color, temp, temp2);
                     
                     //calculate lamberTerm
                     float length_n = 0;
-                    Vector3f N;
+                    //normalized N
+                    Vector3f N;//normal
                     for(int i = 0; i<3; i++){
                         length_n += pow(normals[v][i],2);
                     }
@@ -473,19 +484,20 @@ void PLYObject::draw()
                     {
                         N[i] = (normals[v][i]/length_n);
                     }
-             
+                    
                     float length_l = 0;
-                    Vector3f L;
+                    //normalized Light
+                    Vector3f nLight;
                     for(int i = 0; i<3; i++){
                         length_l += pow(lightDir[i],2);
                     }
                     length_l = sqrt(length_l);
                     for(int i = 0; i < 3; i++)
                     {
-                        L[i] = (lightDir[i]/length_l);
+                        nLight[i] = (lightDir[i]/length_l);
                     }
             
-                    float lambertTerm = dotProd(N,L);
+                    float lambertTerm = dotProd(N,nLight);
                     
                     if (lambertTerm > 0.0)
                     {
@@ -503,8 +515,9 @@ void PLYObject::draw()
                             temp[i] *= lambertTerm;
                         }
                         add(result_color, result_color, temp);
-                        //specular comonent
-                        //normalization
+                        
+                        //specular comonent -
+                        //normalize the viewer position
                         Vector3f spe;
                         float length_spe = 0;
                         for(int i = 0; i<3; i++){
@@ -515,6 +528,7 @@ void PLYObject::draw()
                         {
                             spe[i] = (viewer_pos[i]/length_spe);
                         }
+                        //reflection - (-L * N)
                         Vector3f R;
                         //scale(temp, lambertTerm*2 , N);
                         for (int i = 0; i < 4; i++)
@@ -523,17 +537,20 @@ void PLYObject::draw()
                         }
                         sub(R, temp, L);
                     
+                        //dot product of refelction and specular
                         float dotP = dotProd(R, spe);
                         float specular_factor;
                         if (dotP > 0.0)
                         {
+                            //specular coefficient
                             specular_factor = pow(dotP, shin);
                         }
                         else
                         {
                             specular_factor = 0;
                         }
-                        //multVectors(temp,Sl,Sm);
+                        
+                        //update the temp for specular
                         for (int j = 0; j < 4; j++)
                         {
                             temp[j] = Sl[j] * Sm[j];
@@ -544,16 +561,14 @@ void PLYObject::draw()
                         {
                             temp[i] = (specular_factor * attenuation) * temp[i];
                         }
-                        
-                        
+                        //final color
                         add(result_color, result_color, temp);
-                        
                         
                     }
                     
                     colors[v][0] = result_color[0]*255;
                     colors[v][1] = result_color[1]*255;
-                    colors[v][2] = result_color[2]*255;
+                    colors[v][2] = result_color[2]*0;
                     
                     
                     
